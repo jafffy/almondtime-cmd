@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
+	"cloud.google.com/go/firestore"
 	firebase "firebase.google.com/go"
 	"google.golang.org/api/option"
 )
@@ -20,6 +22,24 @@ func initializeAppWithCredential(private_key_path string) *firebase.App {
 	return app
 }
 
+func initializeFirestoreClient(ctx context.Context, app *firebase.App) *firestore.Client {
+	client, err := app.Firestore(ctx)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	return client
+}
+
+func addActivityLog(ctx context.Context, client *firestore.Client) {
+	_, _, err := client.Collection("logs").Add(ctx, map[string]interface{}{
+		"date": time.Now(),
+	})
+	if err != nil {
+		log.Fatalf("Failed adding log: %v", err)
+	}
+}
+
 func main() {
 	private_key_path := os.Args[1]
 
@@ -27,10 +47,9 @@ func main() {
 
 	ctx := context.Background()
 	app := initializeAppWithCredential(private_key_path)
+	firestore_client := initializeFirestoreClient(ctx, app)
 
-	client, err := app.Firestore(ctx)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	defer client.Close()
+	addActivityLog(ctx, firestore_client)
+
+	defer firestore_client.Close()
 }
