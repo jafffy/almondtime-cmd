@@ -1,2 +1,6 @@
 build/
 .vscode/
+.credentials/
+
+# Golang related
+*.sum
